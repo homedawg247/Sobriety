@@ -7,130 +7,111 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
+      background: linear-gradient(to bottom, #fdf6e3, #ffe);
+      background-image: url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=60');
       background-size: cover;
-      background-position: center;
       background-repeat: no-repeat;
+      background-position: center;
+      color: #333;
+      padding: 20px;
     }
     .container {
-      max-width: 400px;
-      margin: 2rem auto;
-      padding: 2rem;
+      max-width: 500px;
       background-color: rgba(255, 255, 255, 0.85);
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin: 40px auto;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
-    h1, label {
+    h1 {
       text-align: center;
-      display: block;
-      margin-bottom: 1rem;
+      margin-bottom: 20px;
     }
     input, button {
-      display: block;
       width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      font-size: 1rem;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
     }
-    nav {
+    .settings {
       text-align: center;
-      margin-top: 1rem;
+      margin-top: 20px;
     }
     a {
-      margin: 0 1rem;
+      color: #007BFF;
       text-decoration: none;
-      color: #007acc;
+    }
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="container" id="mainView">
+  <div class="container" id="main">
     <h1>Sobriety Tracker</h1>
-    <label for="startDate">Quit Date:</label>
+    <label for="startDate">Start Date:</label>
     <input type="date" id="startDate">
     <label for="weeklySpend">Weekly Spend ($):</label>
     <input type="number" id="weeklySpend" step="0.01">
-    <button onclick="calculate()">Update</button>
-    <p id="weeks"></p>
-    <p id="money"></p>
-    <nav><a href="#" onclick="showSettings()">Settings</a></nav>
+    <button onclick="updateTracker()">Update</button>
+    <p id="output"></p>
+    <div class="settings">
+      <a href="#" onclick="showSettings()">Settings</a>
+    </div>
   </div>
 
-  <div class="container" id="settingsView" style="display:none;">
+  <div class="container" id="settings" style="display:none;">
     <h1>Settings</h1>
-    <label for="bgImage">Background Image URL:</label>
-    <input type="url" id="bgImage">
-    <button onclick="saveSettings()">Save</button>
-    <nav><a href="#" onclick="showMain()">Back</a></nav>
+    <label for="bgUrl">Background Image URL:</label>
+    <input type="text" id="bgUrl">
+    <button onclick="updateBackground()">Update Background</button>
+    <div class="settings">
+      <a href="#" onclick="showMain()">Back to Tracker</a>
+    </div>
   </div>
 
   <script>
-    function calculate() {
-      const startDateInput = document.getElementById("startDate").value;
-      const weeklySpendInput = document.getElementById("weeklySpend").value;
+    function updateTracker() {
+      const startDate = new Date(document.getElementById('startDate').value);
+      const weeklySpend = parseFloat(document.getElementById('weeklySpend').value);
+      const now = new Date();
 
-      if (!startDateInput) {
-        alert("Please select a quit date.");
+      if (isNaN(startDate) || isNaN(weeklySpend)) {
+        document.getElementById('output').textContent = 'Please enter both the start date and weekly spend.';
         return;
       }
 
-      if (!weeklySpendInput || isNaN(weeklySpendInput)) {
-        alert("Please enter a valid weekly spend.");
-        return;
-      }
+      const diffTime = now - startDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-      const startDate = new Date(startDateInput);
-      const weeklySpend = parseFloat(weeklySpendInput);
-      const today = new Date();
+      // Calculate months and days
+      const start = new Date(startDate);
+      const months = now.getMonth() - start.getMonth() + 12 * (now.getFullYear() - start.getFullYear());
+      const monthStart = new Date(start.getFullYear(), start.getMonth() + months, start.getDate());
+      const remainingDays = Math.floor((now - monthStart) / (1000 * 60 * 60 * 24));
 
-      const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-      const timeDiff = today - startDate;
-      const weeksPassed = Math.floor(timeDiff / msPerWeek);
+      const weeks = Math.floor(diffDays / 7);
+      const savings = ((weeks) * weeklySpend).toFixed(2);
 
-      const savedMoney = weeksPassed * weeklySpend;
-
-      document.getElementById("weeks").textContent = `Weeks sober: ${weeksPassed}`;
-      document.getElementById("money").textContent = `Money saved: $${savedMoney.toFixed(2)}`;
-
-      localStorage.setItem("sobrietyStartDate", startDateInput);
-      localStorage.setItem("sobrietyWeeklySpend", weeklySpendInput);
+      document.getElementById('output').textContent = `You've been sober for ${months} month(s) and ${remainingDays} day(s) and saved approximately $${savings}.`;
     }
 
-    function loadSettings() {
-      const savedDate = localStorage.getItem("sobrietyStartDate");
-      const savedSpend = localStorage.getItem("sobrietyWeeklySpend");
-      const savedBg = localStorage.getItem("sobrietyBgImage");
-
-      if (savedDate) document.getElementById("startDate").value = savedDate;
-      if (savedSpend) document.getElementById("weeklySpend").value = savedSpend;
-      if (savedBg) {
-        document.body.style.backgroundImage = `url('${savedBg}')`;
-        document.getElementById("bgImage").value = savedBg;
+    function updateBackground() {
+      const url = document.getElementById('bgUrl').value;
+      if (url) {
+        document.body.style.backgroundImage = `url('${url}')`;
       }
-
-      if (savedDate && savedSpend) calculate();
-    }
-
-    function saveSettings() {
-      const bgUrl = document.getElementById("bgImage").value;
-      localStorage.setItem("sobrietyBgImage", bgUrl);
-      document.body.style.backgroundImage = `url('${bgUrl}')`;
-      alert("Background updated!");
-      showMain();
     }
 
     function showSettings() {
-      document.getElementById("mainView").style.display = "none";
-      document.getElementById("settingsView").style.display = "block";
+      document.getElementById('main').style.display = 'none';
+      document.getElementById('settings').style.display = 'block';
     }
 
     function showMain() {
-      document.getElementById("settingsView").style.display = "none";
-      document.getElementById("mainView").style.display = "block";
+      document.getElementById('settings').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
     }
-
-    window.onload = loadSettings;
   </script>
 </body>
 </html>
