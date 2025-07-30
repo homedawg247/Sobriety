@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sobriety Tracker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .container {
+      max-width: 400px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: rgba(255, 255, 255, 0.85);
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, label {
+      text-align: center;
+      display: block;
+      margin-bottom: 1rem;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    nav {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    a {
+      margin: 0 1rem;
+      text-decoration: none;
+      color: #007acc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="mainView">
+    <h1>Sobriety Tracker</h1>
+    <label for="startDate">Quit Date:</label>
+    <input type="date" id="startDate">
+    <label for="weeklySpend">Weekly Spend ($):</label>
+    <input type="number" id="weeklySpend" step="0.01">
+    <button onclick="calculate()">Update</button>
+    <p id="weeks"></p>
+    <p id="money"></p>
+    <nav><a href="#" onclick="showSettings()">Settings</a></nav>
+  </div>
+
+  <div class="container" id="settingsView" style="display:none;">
+    <h1>Settings</h1>
+    <label for="bgImage">Background Image URL:</label>
+    <input type="url" id="bgImage">
+    <button onclick="saveSettings()">Save</button>
+    <nav><a href="#" onclick="showMain()">Back</a></nav>
+  </div>
+
+  <script>
+    function calculate() {
+      const startDateInput = document.getElementById("startDate").value;
+      const weeklySpendInput = document.getElementById("weeklySpend").value;
+
+      if (!startDateInput) {
+        alert("Please select a quit date.");
+        return;
+      }
+
+      if (!weeklySpendInput || isNaN(weeklySpendInput)) {
+        alert("Please enter a valid weekly spend.");
+        return;
+      }
+
+      const startDate = new Date(startDateInput);
+      const weeklySpend = parseFloat(weeklySpendInput);
+      const today = new Date();
+
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+      const timeDiff = today - startDate;
+      const weeksPassed = Math.floor(timeDiff / msPerWeek);
+
+      const savedMoney = weeksPassed * weeklySpend;
+
+      document.getElementById("weeks").textContent = `Weeks sober: ${weeksPassed}`;
+      document.getElementById("money").textContent = `Money saved: $${savedMoney.toFixed(2)}`;
+
+      localStorage.setItem("sobrietyStartDate", startDateInput);
+      localStorage.setItem("sobrietyWeeklySpend", weeklySpendInput);
+    }
+
+    function loadSettings() {
+      const savedDate = localStorage.getItem("sobrietyStartDate");
+      const savedSpend = localStorage.getItem("sobrietyWeeklySpend");
+      const savedBg = localStorage.getItem("sobrietyBgImage");
+
+      if (savedDate) document.getElementById("startDate").value = savedDate;
+      if (savedSpend) document.getElementById("weeklySpend").value = savedSpend;
+      if (savedBg) {
+        document.body.style.backgroundImage = `url('${savedBg}')`;
+        document.getElementById("bgImage").value = savedBg;
+      }
+
+      if (savedDate && savedSpend) calculate();
+    }
+
+    function saveSettings() {
+      const bgUrl = document.getElementById("bgImage").value;
+      localStorage.setItem("sobrietyBgImage", bgUrl);
+      document.body.style.backgroundImage = `url('${bgUrl}')`;
+      alert("Background updated!");
+      showMain();
+    }
+
+    function showSettings() {
+      document.getElementById("mainView").style.display = "none";
+      document.getElementById("settingsView").style.display = "block";
+    }
+
+    function showMain() {
+      document.getElementById("settingsView").style.display = "none";
+      document.getElementById("mainView").style.display = "block";
+    }
+
+    window.onload = loadSettings;
+  </script>
+</body>
+</html>
